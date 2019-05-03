@@ -2,10 +2,10 @@
 
 Function docker-env {
 	minikube docker-env > $null 2>&1
-    if (! $?){
-        echo "starting minikube host"
-        minikube start > $null
-    }
+	if (! $?){
+		echo "starting minikube host"
+		minikube start > $null
+	}
 	& minikube docker-env | Invoke-Expression
 	echo "Docker environment set"
 }
@@ -16,7 +16,7 @@ Function minirestart {
 	echo "minikube deleted. recreating..."
 	minikube start --memory 3500 
 	echo "minikube recreated. setting environment"
-    Start-Job -ScriptBlock {helm init} > $null
+	Start-Job -ScriptBlock {helm init} > $null
 	docker-env
 	$end=Get-Date
 	$delay=$end-$start
@@ -24,9 +24,9 @@ Function minirestart {
 }
 
 Function ministart {
-    Start-Job -ScriptBlock {minikube start $args} > $null
+	Start-Job -ScriptBlock {minikube start $args} > $null
 }
 
 Function ministop {
-    Start-Job -ScriptBlock {minikube stop} > $null
+	Start-Job -ScriptBlock {minikube stop} > $null
 }
