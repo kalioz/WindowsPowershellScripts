@@ -5,6 +5,8 @@ Set-Alias kuebtcl kubectl
 Set-Alias kubeclt kubectl
 Set-Alias kb kubectl
 
+Set-Alias heml helm
+
 ## Custom contexts quick-access
 
 Function kbdev {
@@ -12,6 +14,20 @@ Function kbdev {
 		kubectl config set-context aks-valo-dev --namespace $args[0]
 	}
 	kubectl config use-context aks-valo-dev
+}
+
+Function kbstg {
+    if ( $args[0] ){
+		kubectl config set-context aks-valo-stg --namespace $args[0]
+	}
+	kubectl config use-context aks-valo-stg
+}
+
+Function kbint {
+    if ( $args[0] ){
+		kubectl config set-context aks-valo-int --namespace $args[0]
+	}
+	kubectl config use-context aks-valo-int
 }
 
 Function kbmini {
@@ -28,12 +44,16 @@ Function kbns {
 	kubectl config set-context $(kubectl config current-context) --namespace $args[0]
 }
 
-### shortcut for kubectl get pods -w
+### shortcut for kubectl get pods
 Function kbp {
-	kubectl get pods -w $args
+	kubectl get pods $args
 }
 
-### better `kubectl get pods -w` = refresh the same environment
+Function kbpw {
+    kubectl get pods -w $args
+}
+
+### better `kubectl get pods -w` = refresh the same display
 Function kbp2 {
 	echo ""
 	$startCursor=$host.UI.RawUI.CursorPosition
@@ -45,9 +65,10 @@ Function kbp2 {
 		$host.UI.RawUI.CursorPosition=$startCursor
 		# clean old result
 		ForEach ($line in $previousResult){
-			$a=" "*$line.length
-			echo $a
+			echo $(" "*$line.length)
 		}
+        echo ""
+        echo $(" "*50)
 		$previousResult=$result
 		#display new result
 		$host.UI.RawUI.CursorPosition=$startCursor
@@ -56,6 +77,12 @@ Function kbp2 {
 		echo $(Get-Date -UFormat "%A %d %B %T")
 		Start-Sleep -Seconds $refresh
 	} While(1)
+}
+
+### find pod using simple name
+Function kbp_simple($name){
+    $names= kubectl get pods --all-namespaces |  Select-String -Pattern "^[^ ]*[ ]+($name[^ ]*)" -AllMatches | % {$_.Matches.groups[1].Value}
+    return $names
 }
 
 ### get or change current context
@@ -74,4 +101,22 @@ Function kbctx($config, $namespace) {
 Function kbimage {
 	$a=kubectl describe pod $args |Select-String -Pattern "Image:"
 	$a -replace " "
+}
+
+### Get pods with nodes
+Function kbpnode {
+    kubectl get pod -o=custom-columns=NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName --sort-by='.spec.nodeName' $args
+}
+
+### Kubectl logs
+Function kblogs {
+    kubectl logs $args
+}
+
+Set-Alias kblog kblogs
+Set-Alias kbl kblogs
+
+#### Kubectl logs --tail 0 -f
+Function kblf {
+    kubectl logs --tail 0 -f $args
 }

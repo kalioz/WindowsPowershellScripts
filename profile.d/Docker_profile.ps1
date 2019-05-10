@@ -18,3 +18,7 @@ Function dockerpushacr($localimage, $distantimage) {
 		echo "did not push image"
 	}
 }
+
+Function dockertagsavailable($image) {
+    curl "https://registry.hub.docker.com/v1/repositories/${image}/tags" | Select-Object -Expand Content | ConvertFrom-Json
+}
