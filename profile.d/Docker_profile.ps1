@@ -1,5 +1,5 @@
 Function dockerpushacr($localimage, $distantimage) {
-	$acrName=acrvalodev
+	$acrName="acrvalodev"
 	
 	if (! $distantimage){
 		$distantimage=$localimage
@@ -13,7 +13,7 @@ Function dockerpushacr($localimage, $distantimage) {
 	echo ">> docker push $acrName.azurecr.io/$distantimage"
 	$c = Read-Host "Confirm push? (y/n): "
 	if (($c -eq 'y') -or ($c -eq 'Y') -or ($c -eq 'yes')){
-		docker push $acrName.azurecr.io/$distantimage
+		docker push ${acrName}.azurecr.io/${distantimage}
 	}else{
 		echo "did not push image"
 	}

@@ -1,5 +1,10 @@
 ## UTILS
 
+### prompt
+function prompt {
+    "PS $(Get-Date -UFormat '%R') $(get-location)>"
+}
+
 ### cd - Change Directory
 
 #### cdl = cd+ls
@@ -56,6 +61,23 @@ Function touch {
 
 ### Where function (Where-Object doesn't act as bash:where)
 del alias:where -Force
+
+### Curl function (Invoke-WebRequest jsut doesn't do it justice)
+del alias:curl -Force
+
+Function curl {
+  bash -c "curl $args"
+}
+
+### printenv
+Function printenv {
+  Get-ChildItem Env:
+}
+
+### JMeter 
+Function jmeter2 {
+  Start-Job {jmeter $args}
+}
 
 ### Utils
 

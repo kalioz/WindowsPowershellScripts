@@ -55,12 +55,20 @@ Function kbpw {
 
 ### better `kubectl get pods -w` = refresh the same display
 Function kbp2 {
+  $podName=""
+  if ($args.Count -eq 1){
+    $podName=$args[0]
+  }
 	echo ""
 	$startCursor=$host.UI.RawUI.CursorPosition
 	$refresh=1
 	$previousResult=$null
 	Do {
-		$result=$(kubectl get pods $args)
+    if ($podName.length -gt 0) {
+      $result=$(kubectl get pods | Select-String -Pattern $podName)
+    }else{
+      $result=$(kubectl get pods $args)
+    }
 		# reset the cursor
 		$host.UI.RawUI.CursorPosition=$startCursor
 		# clean old result
@@ -100,7 +108,8 @@ Function kbctx($config, $namespace) {
 ### get images used in a pod
 Function kbimage {
 	$a=kubectl describe pod $args |Select-String -Pattern "Image:"
-	$a -replace " "
+	$a=$($a -replace " " -replace "Image:")
+    return $a
 }
 
 ### Get pods with nodes
