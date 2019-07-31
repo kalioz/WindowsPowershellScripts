@@ -30,6 +30,13 @@ Function kbint {
 	kubectl config use-context aks-valo-int
 }
 
+Function kbtest {
+    if ( $args[0] ){
+		kubectl config set-context aks-valo-test --namespace $args[0]
+	}
+	kubectl config use-context aks-valo-test
+}
+
 Function kbmini {
 	if ( $args[0] ){
 		kubectl config set-context minikube --namespace $args[0]
@@ -41,7 +48,18 @@ Function kbmini {
 
 ### change namespace
 Function kbns {
-	kubectl config set-context $(kubectl config current-context) --namespace $args[0]
+    <#
+    .DESCRIPTION
+    Modify the current Kubernetes context to change the namespace.
+
+    .PARAMETER namespace
+    Selected namespace
+    #>
+    param(
+        [Parameter(Mandatory=$true, Position=0)] 
+        [string] $namespace
+    )
+	kubectl config set-context $(kubectl config current-context) --namespace $namespace
 }
 
 ### shortcut for kubectl get pods
@@ -51,6 +69,15 @@ Function kbp {
 
 Function kbpw {
     kubectl get pods -w $args
+}
+
+### shortcut for kb exec -it <podName>
+Function kbexec {
+    if ($args.Count -eq 1) {
+      kubectl exec -it $args[0] bash
+    } else {
+      kubectl exec -it $args
+    }
 }
 
 ### better `kubectl get pods -w` = refresh the same display
@@ -107,7 +134,7 @@ Function kbctx($config, $namespace) {
 
 ### get images used in a pod
 Function kbimage {
-	$a=kubectl describe pod $args |Select-String -Pattern "Image:"
+	$a=kubectl describe pod $args | Select-String -Pattern "Image:"
 	$a=$($a -replace " " -replace "Image:")
     return $a
 }
@@ -128,4 +155,9 @@ Set-Alias kbl kblogs
 #### Kubectl logs --tail 0 -f
 Function kblf {
     kubectl logs --tail 0 -f $args
+}
+
+### Kubectl delete failings
+Function kbdeletefailing {
+  kubectl delete $(kubectl get pods --field-selector=status.phase=Failed --output name)
 }

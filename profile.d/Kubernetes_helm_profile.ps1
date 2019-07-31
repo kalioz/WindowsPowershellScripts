@@ -1,0 +1,1 @@
+#Set-Alias helmfile 'C:\Program Files (x86)\Helmfile\helmfile_windows_386.exe'

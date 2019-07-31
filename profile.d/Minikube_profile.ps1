@@ -1,6 +1,6 @@
 ## MINIKUBE
 
-Function docker-env {
+Function docker-env-Minikube {
 	minikube docker-env > $null 2>&1
 	if (! $?){
 		echo "starting minikube host"
