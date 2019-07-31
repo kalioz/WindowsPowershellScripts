@@ -86,30 +86,30 @@ Function kbp2 {
   if ($args.Count -eq 1){
     $podName=$args[0]
   }
-	echo ""
+	Write-Output ""
 	$startCursor=$host.UI.RawUI.CursorPosition
 	$refresh=1
 	$previousResult=$null
 	Do {
-    if ($podName.length -gt 0) {
-      $result=$(kubectl get pods | Select-String -Pattern $podName)
-    }else{
-      $result=$(kubectl get pods $args)
-    }
+        if ($podName.length -gt 0) {
+            $result=$(kubectl get pods | Select-String -Pattern $podName)
+        }else{
+            $result=$(kubectl get pods $args)
+        }
 		# reset the cursor
 		$host.UI.RawUI.CursorPosition=$startCursor
 		# clean old result
 		ForEach ($line in $previousResult){
-			echo $(" "*$line.length)
+			Write-Output $(" "*$line.length)
 		}
-        echo ""
-        echo $(" "*50)
+        Write-Output ""
+        Write-Output $(" "*50)
 		$previousResult=$result
 		#display new result
 		$host.UI.RawUI.CursorPosition=$startCursor
-		echo $result
-		echo ""
-		echo $(Get-Date -UFormat "%A %d %B %T")
+		Write-Output $result
+		Write-Output ""
+		Write-Output $(Get-Date -UFormat "%A %d %B %T")
 		Start-Sleep -Seconds $refresh
 	} While(1)
 }
