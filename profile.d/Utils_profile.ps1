@@ -1,95 +1,21 @@
 ## UTILS
 
-### prompt
-function prompt {
-  # colors
-  $ESC= [char]27
-  $red = "$ESC[91m"
-  $green = "$ESC[92m"
-  $red_2 = "$ESC[31m"
-  $green_2 = "$ESC[32m"
-  $reset = "$ESC[0m"
+## history completion time
+# returns the completion time of a command launched in this powershell. you can find the command id with `history`
+function history_completion_time {
+  param (
+        [int] $number
+    )
   
-  # arrows
-  $up_arrow=[char]8593
-  $down_arrow=[char]8595
-  
-  # if a command was executed before : print time of execution
-  $blacklist=@("git","cd","ls")
-  if ((history).length -gt 0 -and $False){
-    $last_command = (history)[-1]
-    $blacklisted = $False
-    ForEach ($black in $blacklist){
-      if ($last_command.CommandLine.StartsWith($black)){
-        $blacklisted = $True
-        break
-      }
-    }
-    if (! $blacklisted){
-      echo "$($last_command.StartExecutionTime.ToString('HH:mm:ss')) -> $($last_command.EndExecutionTime.ToString('HH:mm:ss')) ($([math]::Round(($last_command.EndExecutionTime - $last_command.StartExecutionTime).TotalSeconds, 3))s)"
-    }
+  if (!($number)) {
+    $number=(history).Length
   }
-
-  # date
-  $output="${reset}PS $(Get-Date -UFormat '%R')"
-  
-  # location
-  $location = $(get-location).Path
-  if ($location.length -gt "$HOME/".length){
-    $location = $location.replace("$HOME",'~')
-  }
-  if ( $location.Contains(" ") ){
-    $output+=" `"$location`" "
-  } else {
-    $output+=" $location "
+  # verify number is valid
+  if ($number -lt 1 -or $number -gt (history).Length) {
+    throw  "$number is not valid for current history"
   }
   
-  # git branch
-  $G_BRANCH = git branch -vv 2>$null | Select-String -Pattern "\* (?<name>[^ ]+).*" 
-  if ($?) {
-    # fetch last updates if not done in more than 30 minutes
-    $FETCH_HEAD="$(git rev-parse --show-toplevel)/.git/FETCH_HEAD"
-    if (Get-Item $FETCH_HEAD | Select -Property LastWriteTime | %{$_.LastWriteTime.AddMinutes(120) -lt (Get-Date)}){
-      git fetch > $null
-      $G_BRANCH = git branch -vv 2>$null | Select-String -Pattern "\* (?<name>[^ ]+).*"
-    }
-    
-    $current_branch = $G_BRANCH.matches.groups[1].value
-    # find difference between current and up
-    $ahead_match = $G_BRANCH.Line | Select-String -Pattern "ahead ([0-9]+)"
-    $ahead=""
-    if ($ahead_match.matches.groups.length -eq 2){
-      $a=$ahead_match.matches.groups[1].value
-      $ahead="${a}${up_arrow}"
-    }
-    
-    $behind_match = $G_BRANCH.Line | Select-String -Pattern "behind ([0-9]+)"
-    $behind=""
-    if ($behind_match.matches.groups.length -eq 2){
-      $b=$behind_match.matches.groups[1].value
-      $behind="${b}${down_arrow}"
-    }
-    
-    $gitdiff=""
-    if ($behind.length -gt 0) {
-      $gitdiff+= " ${red_2}${behind}${reset}"
-    }
-    if ($ahead.length -gt 0) {
-      $gitdiff+= " ${green_2}${ahead}${reset}"
-    }
-    
-    $default_branch = git symbolic-ref refs/remotes/origin/HEAD | %{$_ -replace "refs/remotes/origin/",""}
-    if ("$default_branch" -eq "$current_branch") {
-      $output+="[${red}${current_branch}${reset}${gitdiff}] "
-    } else {
-      $output+="[${green}${current_branch}${reset}${gitdiff}] "
-    }
-  }
-  
-  # end char
-  $output+="$ "
-  
-  echo $output
+  return (history)[$number-1].EndExecutionTime - (history)[$number-1].StartExecutionTime
 }
 
 ### ssh tunnel using plink (putty headless)
@@ -155,6 +81,52 @@ Function ip(){
     Write-Output "WebIp : $((Invoke-WebRequest 'https://api.ipify.org').Content)"
 }
 
+Function ip2(){
+  $collectionWithItems = New-Object System.Collections.ArrayList
+  $a=Get-NetIpAddress
+  if (! $args[0]){
+    # no args : display all active connexions
+    #virtual first
+    Foreach($interface in $a){
+      if ($interface.AddressState -like "*Preferred*" -and $interface.AddressFamily -like "*IPv4*" -and ($interface.InterfaceAlias -like "*VEthernet*" -or $interface.InterfaceAlias -like "*Virtual*")){
+        $temp = New-Object System.Object
+        $temp | Add-Member -MemberType NoteProperty -Name "Type" -Value "Virtual"
+        $temp | Add-Member -MemberType NoteProperty -Name "Name" -Value "$($interface.InterfaceAlias)"
+        $temp | Add-Member -MemberType NoteProperty -Name "Ip" -Value "$($interface.IPAddress)"
+        $collectionWithItems.Add($temp) | Out-Null
+      }
+    }
+    
+    #real after
+    Foreach($interface in $a){
+      if ($interface.AddressState -like "*Preferred*" -and $interface.AddressFamily -like "*IPv4*" -and !($interface.InterfaceAlias -like "*VEthernet*" -or $interface.InterfaceAlias -like "*Virtual*")){
+        $temp = New-Object System.Object
+        $temp | Add-Member -MemberType NoteProperty -Name "Type" -Value "Real"
+        $temp | Add-Member -MemberType NoteProperty -Name "Name" -Value "$($interface.InterfaceAlias)"
+        $temp | Add-Member -MemberType NoteProperty -Name "Ip" -Value "$($interface.IPAddress)"
+        $collectionWithItems.Add($temp) | Out-Null
+      }
+    }
+  }else{
+    Foreach($interface in $a){
+      if ($interface.AddressFamily -like "*IPv4*" -and $interface.InterfaceAlias -like "$($args[0])*"){
+        $temp = New-Object System.Object
+        $temp | Add-Member -MemberType NoteProperty -Name "Name" -Value "$($interface.InterfaceAlias)"
+        $temp | Add-Member -MemberType NoteProperty -Name "Ip" -Value "$($interface.IPAddress)"
+        $collectionWithItems.Add($temp) | Out-Null
+      }
+    }
+  }
+  
+  $temp = New-Object System.Object
+  $temp | Add-Member -MemberType NoteProperty -Name "Type" -Value "External"
+  $temp | Add-Member -MemberType NoteProperty -Name "Name" -Value "WebIp (ipify)"
+  $temp | Add-Member -MemberType NoteProperty -Name "Ip" -Value "$((Invoke-WebRequest 'https://api.ipify.org').Content)"
+  $collectionWithItems.Add($temp) | Out-Null
+  
+  return $collectionWithItems
+}
+
 Function pwn_cisco {
 	$c = Get-User-Permission "This command will stop all cisco services. are you sure you want to proceed ? (y/n): "
 	if ($c){
@@ -185,6 +157,11 @@ Function Get-User-Permission {
     $c = Read-Host $message
 
     return ($c -eq 'y') -or ($c -eq 'Y') -or ($c -eq 'yes') -or ($c -eq 'o') -or ($c -eq 'O') -or ($c -eq 'oui')
+}
+
+
+Function dos2unixr {
+  wsl bash -c 'find . -type f -not -path "*node_modules*" -not -path "*/node_modules/*" -not -path "*.git*" -not -path "*/.git/*" -not -path "*.jpg" -not -path "*.png" -not -path "*.pdf" -exec dos2unix {} \;'
 }
 
 Set-Alias nano notepad++.exe
