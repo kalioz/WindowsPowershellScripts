@@ -1,3 +1,7 @@
+# Useful (external) tools
+# stern : kubectl logs - https://github.com/wercker/stern
+# dive  : debug docker image
+
 # Kubernetes shortcuts
 Set-Alias kuebctl kubectl
 Set-Alias kubetcl kubectl
@@ -37,6 +41,22 @@ Function kbtest {
 	kubectl config use-context aks-valo-test
 }
 
+Function kbprod {
+    if ( $args[0] ){
+		kubectl config set-context aks-valo-prod --namespace $args[0]
+	}
+	kubectl config use-context aks-valo-prod
+}
+
+Function kbprodadmin {
+    if ( $args[0] ){
+		kubectl config set-context aks-valo-prod-admin --namespace $args[0]
+	}
+	kubectl config use-context aks-valo-prod-admin
+}
+
+
+
 Function kbmini {
 	if ( $args[0] ){
 		kubectl config set-context minikube --namespace $args[0]
@@ -59,7 +79,12 @@ Function kbns {
         [Parameter(Mandatory=$true, Position=0)] 
         [string] $namespace
     )
-	kubectl config set-context $(kubectl config current-context) --namespace $namespace
+  kubectl get namespace $namespace > $null
+  if ( ! $? ){
+    echo "Warning - namespace doesn't exists. aborting change"
+    return
+  }
+  kubectl config set-context $(kubectl config current-context) --namespace $namespace
 }
 
 ### shortcut for kubectl get pods
@@ -134,9 +159,12 @@ Function kbctx($config, $namespace) {
 
 ### get images used in a pod
 Function kbimage {
-	$a=kubectl describe pod $args | Select-String -Pattern "Image:"
-	$a=$($a -replace " " -replace "Image:")
-    return $a
+	kubectl get pod $args --output custom-columns="NAME:metadata.name,IMAGE:spec.containers[*].image,INIT_IMAGE:spec.initContainers[*].image"
+}
+
+### get pods with labels
+Function kblabels {
+  kubectl get pods $args --output custom-columns="NAME:metadata.name,LABELS:metadata.labels"
 }
 
 ### Get pods with nodes
@@ -158,6 +186,6 @@ Function kblf {
 }
 
 ### Kubectl delete failings
-Function kbdeletefailing {
+Function kbdeletefailed {
   kubectl delete $(kubectl get pods --field-selector=status.phase=Failed --output name)
 }
