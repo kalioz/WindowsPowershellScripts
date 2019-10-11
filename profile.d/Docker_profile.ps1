@@ -130,5 +130,9 @@ Function docker-env-dockerMachine {
     Write-Output "Docker Environment Set - Docker-Machine"
 }
 
+function dockerstop { docker stop $(docker ps -q) }
+
 $dockershared = "C:\Users\cloisele\Documents\docker_shared"
 Function dockerShared() { Set-Location $dockershared; }
+
+Set-Alias docky docker-machine
