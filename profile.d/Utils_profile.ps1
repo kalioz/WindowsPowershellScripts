@@ -8,14 +8,14 @@ function history_completion_time {
     )
   
     if (!($number)) {
-        $number = (history).Length
+        $number = (Get-History).Length
     }
     # verify number is valid
-    if ($number -lt 1 -or $number -gt (history).Length) {
+    if ($number -lt 1 -or $number -gt (Get-History).Length) {
         throw  "$number is not valid for current history"
     }
   
-    return (history)[$number - 1].EndExecutionTime - (history)[$number - 1].StartExecutionTime
+    return (Get-History)[$number - 1].EndExecutionTime - (Get-History)[$number - 1].StartExecutionTime
 }
 
 ### ssh tunnel using plink (putty headless)
@@ -28,7 +28,7 @@ Function sshtunnel {
 	
     $localPort = 8306
     $mysqlserverport = 3306
-    echo "Starting SSH tunnel, listening on localhost:$localPort"
+    Write-Output "Starting SSH tunnel, listening on localhost:$localPort"
     plink.exe -ssh ${reboundUser}@${reboundserver} -i $reboundKey -L ${localPort}:${mysqlserver}:${mysqlserverport} -N
 }
 
