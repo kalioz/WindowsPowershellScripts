@@ -82,27 +82,27 @@ function prompt {
     $check_mark = [char]10004
     $cross_mark = [char]10006
   
-    $output = ""
+    $output = New-Object -TypeName System.Text.StringBuilder
   
     # history # for quick access
     if ($history_length) {
-        $h = (history).length + 1
-        $output += "${grey}${h}${reset}."
+        $h = (Get-History).length + 1
+        $output.append("${grey}${h}${reset}.")
     }
   
     # last command success 
     if ($last_command_success) {
         # $last_command_status = "${reset}${green}${check_mark}${reset}"
-        $output += "${reset}${green}PS${reset}" # use PS to reduce colors on the prompt
+        $output.append("${reset}${green}PS${reset}") # use PS to reduce colors on the prompt
     }
     else {
-        $output += "${reset}${red}${cross_mark}${reset}"
+        $output.append("${reset}${red}${cross_mark}${reset}")
     }
   
     # if a command was executed before : print time of execution
     $blacklist = @("git", "cd", "ls")
-    if ((history).length -gt 0 -and $False) {
-        $last_command = (history)[-1]
+    if ((Get-History).length -gt 0 -and $False) {
+        $last_command = (Get-History)[-1]
         $blacklisted = $False
         ForEach ($black in $blacklist) {
             if ($last_command.CommandLine.StartsWith($black)) {
@@ -111,7 +111,7 @@ function prompt {
             }
         }
         if (! $blacklisted) {
-            echo "$($last_command.StartExecutionTime.ToString('HH:mm:ss')) -> $($last_command.EndExecutionTime.ToString('HH:mm:ss')) ($([math]::Round(($last_command.EndExecutionTime - $last_command.StartExecutionTime).TotalSeconds, 3))s)"
+            Write-Output "$($last_command.StartExecutionTime.ToString('HH:mm:ss')) -> $($last_command.EndExecutionTime.ToString('HH:mm:ss')) ($([math]::Round(($last_command.EndExecutionTime - $last_command.StartExecutionTime).TotalSeconds, 3))s)"
         }
     }
 
@@ -120,14 +120,14 @@ function prompt {
         if ($date_color) {
             $hour = $(Get-Date -UFormat '%H')
             if ($hour -ge 18 -or ($hour -ge 12 -and $hour -lt 14)) {
-                $output += "${reset}${red} $(Get-Date -UFormat '%R')${reset}"
+                $output.append("${reset}${red} $(Get-Date -UFormat '%R')${reset}")
             }
             else {
-                $output += "${reset} $(Get-Date -UFormat '%R')"
+                $output.append("${reset} $(Get-Date -UFormat '%R')")
             }
         }
         else {
-            $output += "${reset} $(Get-Date -UFormat '%R')"
+            $output.append("${reset} $(Get-Date -UFormat '%R')")
         }
     }
   
@@ -138,29 +138,31 @@ function prompt {
             $location = $location.replace("$HOME", '~')
         }
         if ( $location.Contains(" ") ) {
-            $output += " `"$location`" "
+            $output.append(" `"$location`" ")
         }
         else {
-            $output += " $location "
+            $output.append(" $location ")
         }
     }
   
     # kubernetes
     if ($kubernetes) {
-        $output += prompt_kubernetes
+        $kuber_out = prompt_kubernetes
+        $output.append( $kuber_out )
     }
   
     # git branch
     if ($git) {
-        $output += prompt_git
+        $git_out = prompt_git
+        $output.append( $git_out )
     }
     # end char
     if ($newline) {
-        $output += "`n"
+        $output.append("`n")
     }
-    $output += '$ '
+    $output.append('$ ')
   
-    echo $output
+    Write-Output $output.ToString()
 }
 
 function prompt_kubernetes {
@@ -184,12 +186,11 @@ function prompt_kubernetes {
 }
 
 function prompt_git {
-    $output = ""
     $GIT_ROOT = git rev-parse --show-toplevel
     if ($?) {
         # fetch last updates if not done in more than 30 minutes
         $FETCH_HEAD = "${GIT_ROOT}/.git/FETCH_HEAD"
-        if (Get-Item $FETCH_HEAD | Select -Property LastWriteTime | % { $_.LastWriteTime.AddMinutes(120) -lt (Get-Date) }) {
+        if (Get-Item $FETCH_HEAD | Select-Object -Property LastWriteTime | ForEach-Object { $_.LastWriteTime.AddMinutes(120) -lt (Get-Date) }) {
             start-job { git fetch } > $null
         }
     
@@ -211,21 +212,22 @@ function prompt_git {
             $behind = "${b}${down_arrow}"
         }
     
-        $gitdiff = ""
+        $gitdiff = New-Object -TypeName System.Text.StringBuilder
         if ($behind.length -gt 0) {
-            $gitdiff += " ${red_2}${behind}${reset}"
+            $gitdiff.Append(" ${red_2}${behind}${reset}")
         }
         if ($ahead.length -gt 0) {
-            $gitdiff += " ${green_2}${ahead}${reset}"
+            $gitdiff.Append(" ${green_2}${ahead}${reset}")
         }
+        $gitdiffstr = $gitdiff.ToString()
     
-        $default_branch = git symbolic-ref refs/remotes/origin/HEAD | % { $_ -replace "refs/remotes/origin/", "" }
+        $default_branch = git symbolic-ref refs/remotes/origin/HEAD | ForEach-Object { $_ -replace "refs/remotes/origin/", "" }
         if ("$default_branch" -eq "$current_branch") {
-            $output += "[${red}${current_branch}${reset}${gitdiff}] "
+            return "[${red}${current_branch}${reset}${gitdiffstr}] "
         }
         else {
-            $output += "[${green}${current_branch}${reset}${gitdiff}] "
+            return "[${green}${current_branch}${reset}${gitdiffstr}] "
         }
     }
-    return $output
+    return ""
 }
