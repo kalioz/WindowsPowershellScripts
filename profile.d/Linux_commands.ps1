@@ -2,25 +2,26 @@
 
 #### cdl = cd+ls
 Function cdl {
-	cd_unix $args[0]
-	get-ChildItem
+    cd_unix $args[0]
+    get-ChildItem
 }
 
 
 #### cdd = cd+ls ..
 Function cdd {
-	Set-Location ..
-	get-ChildItem
+    Set-Location ..
+    get-ChildItem
 }
 
 #### cd_unix = cd <path> normal, cd default to home directory (accept spaces in name, cd path/to my/file)
 Function cd_unix {
-	if ( $args[0] ){
-		Set-Location "$args"
-	}else{
-		Read-Host "press enter to go to home"
-		Set-Location ~/
-	}
+    if ( $args[0] ) {
+        Set-Location "$args"
+    }
+    else {
+        Read-Host "press enter to go to home"
+        Set-Location ~/
+    }
 }
 
 Remove-Item alias:cd -Force
@@ -35,7 +36,7 @@ Function ssh {
 
 ### touch
 Function touch {
-    foreach ($path in $args){
+    foreach ($path in $args) {
         $null >> $path
     }
 }
@@ -47,19 +48,19 @@ Remove-Item alias:where -Force
 Remove-Item alias:curl -Force
 
 Function curl {
-  bash -c "curl $args"
+    bash -c "curl $args"
 }
 
 ### printenv
 Function printenv {
-  Get-ChildItem Env:
+    Get-ChildItem Env:
 }
 
 ### function base64 --decode
 Function base64decode {
-  $text=$args[0]
-  $cmd="echo '$text' | base64 --decode"
-  bash -c "$cmd"
+    $text = $args[0]
+    $cmd = "echo '$text' | base64 --decode"
+    bash -c "$cmd"
 }
 
 ### grep

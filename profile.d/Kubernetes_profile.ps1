@@ -14,54 +14,54 @@ Set-Alias heml helm
 ## Custom contexts quick-access
 
 Function kbdev {
-	if ( $args[0] ){
-		kubectl config set-context aks-valo-dev --namespace $args[0]
-	}
-	kubectl config use-context aks-valo-dev
+    if ( $args[0] ) {
+        kubectl config set-context aks-valo-dev --namespace $args[0]
+    }
+    kubectl config use-context aks-valo-dev
 }
 
 Function kbstg {
-    if ( $args[0] ){
-		kubectl config set-context aks-valo-stg --namespace $args[0]
-	}
-	kubectl config use-context aks-valo-stg
+    if ( $args[0] ) {
+        kubectl config set-context aks-valo-stg --namespace $args[0]
+    }
+    kubectl config use-context aks-valo-stg
 }
 
 Function kbint {
-    if ( $args[0] ){
-		kubectl config set-context aks-valo-int --namespace $args[0]
-	}
-	kubectl config use-context aks-valo-int
+    if ( $args[0] ) {
+        kubectl config set-context aks-valo-int --namespace $args[0]
+    }
+    kubectl config use-context aks-valo-int
 }
 
 Function kbtest {
-    if ( $args[0] ){
-		kubectl config set-context aks-valo-test --namespace $args[0]
-	}
-	kubectl config use-context aks-valo-test
+    if ( $args[0] ) {
+        kubectl config set-context aks-valo-test --namespace $args[0]
+    }
+    kubectl config use-context aks-valo-test
 }
 
 Function kbprod {
-    if ( $args[0] ){
-		kubectl config set-context aks-valo-prod --namespace $args[0]
-	}
-	kubectl config use-context aks-valo-prod
+    if ( $args[0] ) {
+        kubectl config set-context aks-valo-prod --namespace $args[0]
+    }
+    kubectl config use-context aks-valo-prod
 }
 
 Function kbprodadmin {
-    if ( $args[0] ){
-		kubectl config set-context aks-valo-prod-admin --namespace $args[0]
-	}
-	kubectl config use-context aks-valo-prod-admin
+    if ( $args[0] ) {
+        kubectl config set-context aks-valo-prod-admin --namespace $args[0]
+    }
+    kubectl config use-context aks-valo-prod-admin
 }
 
 
 
 Function kbmini {
-	if ( $args[0] ){
-		kubectl config set-context minikube --namespace $args[0]
-	}
-	kubectl config use-context minikube
+    if ( $args[0] ) {
+        kubectl config set-context minikube --namespace $args[0]
+    }
+    kubectl config use-context minikube
 }
 
 ## kubectl utils
@@ -76,20 +76,20 @@ Function kbns {
     Selected namespace
     #>
     param(
-        [Parameter(Mandatory=$true, Position=0)] 
+        [Parameter(Mandatory = $true, Position = 0)] 
         [string] $namespace
     )
-  kubectl get namespace $namespace > $null
-  if ( ! $? ){
-    echo "Warning - namespace doesn't exists. aborting change"
-    return
-  }
-  kubectl config set-context $(kubectl config current-context) --namespace $namespace
+    kubectl get namespace $namespace > $null
+    if ( ! $? ) {
+        echo "Warning - namespace doesn't exists. aborting change"
+        return
+    }
+    kubectl config set-context $(kubectl config current-context) --namespace $namespace
 }
 
 ### shortcut for kubectl get pods
 Function kbp {
-	kubectl get pods $args
+    kubectl get pods $args
 }
 
 Function kbpw {
@@ -99,77 +99,80 @@ Function kbpw {
 ### shortcut for kb exec -it <podName>
 Function kbexec {
     if ($args.Count -eq 1) {
-      kubectl exec -it $args[0] bash
-    } else {
-      kubectl exec -it $args
+        kubectl exec -it $args[0] bash
+    }
+    else {
+        kubectl exec -it $args
     }
 }
 
 ### better `kubectl get pods -w` = refresh the same display
 Function kbp2 {
-  $podName=""
-  if ($args.Count -eq 1){
-    $podName=$args[0]
-  }
-	Write-Output ""
-	$startCursor=$host.UI.RawUI.CursorPosition
-	$refresh=1
-	$previousResult=$null
-	Do {
+    $podName = ""
+    if ($args.Count -eq 1) {
+        $podName = $args[0]
+    }
+    Write-Output ""
+    $startCursor = $host.UI.RawUI.CursorPosition
+    $refresh = 1
+    $previousResult = $null
+    Do {
         if ($podName.length -gt 0) {
-            $result=$(kubectl get pods | Select-String -Pattern $podName)
-        }else{
-            $result=$(kubectl get pods $args)
+            $result = $(kubectl get pods | Select-String -Pattern $podName)
         }
-		# reset the cursor
-		$host.UI.RawUI.CursorPosition=$startCursor
-		# clean old result
-		ForEach ($line in $previousResult){
-			Write-Output $(" "*$line.length)
-		}
+        else {
+            $result = $(kubectl get pods $args)
+        }
+        # reset the cursor
+        $host.UI.RawUI.CursorPosition = $startCursor
+        # clean old result
+        ForEach ($line in $previousResult) {
+            Write-Output $(" " * $line.length)
+        }
         Write-Output ""
-        Write-Output $(" "*50)
-		$previousResult=$result
-		#display new result
-		$host.UI.RawUI.CursorPosition=$startCursor
-		Write-Output $result
-		Write-Output ""
-		Write-Output $(Get-Date -UFormat "%A %d %B %T")
-		Start-Sleep -Seconds $refresh
-	} While(1)
+        Write-Output $(" " * 50)
+        $previousResult = $result
+        #display new result
+        $host.UI.RawUI.CursorPosition = $startCursor
+        Write-Output $result
+        Write-Output ""
+        Write-Output $(Get-Date -UFormat "%A %d %B %T")
+        Start-Sleep -Seconds $refresh
+    } While (1)
 }
 
 ### find pod using simple name
-Function kbp_simple($name){
-    $names= kubectl get pods --all-namespaces |  Select-String -Pattern "^[^ ]*[ ]+($name[^ ]*)" -AllMatches | % {$_.Matches.groups[1].Value}
+Function kbp_simple($name) {
+    $names = kubectl get pods --all-namespaces | Select-String -Pattern "^[^ ]*[ ]+($name[^ ]*)" -AllMatches | % { $_.Matches.groups[1].Value }
     return $names
 }
 
 ### get or change current context
 Function kbctx($config, $namespace) {
-	if ($config){
-		if ($namespace){
-			kubectl config set-context $config --namespace $namespace
-		}
-		kubectl config use-context $config
-	}else{
-		kubectl config get-contexts $(kubectl config current-context)
-	}
+    if ($config) {
+        if ($namespace) {
+            kubectl config set-context $config --namespace $namespace
+        }
+        kubectl config use-context $config
+    }
+    else {
+        kubectl config get-contexts $(kubectl config current-context)
+    }
 }
 
 ### get images used in a pod
 Function kbimage {
-	kubectl get pod $args --output custom-columns="NAME:metadata.name,IMAGE:spec.containers[*].image,INIT_IMAGE:spec.initContainers[*].image"
+    kubectl get pod $args --output custom-columns="NAME:metadata.name,IMAGE:spec.containers[*].image,INIT_IMAGE:spec.initContainers[*].image"
 }
 
 ### get pods with labels
 Function kblabels {
-  kubectl get pods $args --output custom-columns="NAME:metadata.name,LABELS:metadata.labels"
+    kubectl get pods $args --output custom-columns="NAME:metadata.name,LABELS:metadata.labels"
 }
 
 ### Get pods with nodes
 Function kbpnode {
-    kubectl get pod -o=custom-columns=NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName --sort-by='.spec.nodeName' $args
+    kubectl get pod -o=custom-columns=NAME:.metadata.name, STATUS:.status.phase, NODE:.spec.nodeName --sort-by='.spec.nodeName' $args
 }
 
 ### Kubectl logs
@@ -187,5 +190,5 @@ Function kblf {
 
 ### Kubectl delete failings
 Function kbdeletefailed {
-  kubectl delete $(kubectl get pods --field-selector=status.phase=Failed --output name)
+    kubectl delete $(kubectl get pods --field-selector=status.phase=Failed --output name)
 }

@@ -1,5 +1,5 @@
 Function RestartAt {
-  <#
+    <#
   .DESCRIPTION
   Restarts the computer at the given time
   
@@ -25,17 +25,17 @@ Function RestartAt {
   minimum restart delay is 60 seconds
   #>
 
-  param (
-    [Parameter(Mandatory=$false, Position=0)] 
-    $time = $(Get-Date -UFormat "%H:%M"),
-    $date = $(Get-Date -UFormat "%d/%m/%Y")
-  )
+    param (
+        [Parameter(Mandatory = $false, Position = 0)] 
+        $time = $(Get-Date -UFormat "%H:%M"),
+        $date = $(Get-Date -UFormat "%d/%m/%Y")
+    )
   
-  $now = Get-Date
-  $futur = [datetime]::ParseExact("$date $time", "g", $null)
-  $delaySeconds = [math]::floor((($futur - $now).TotalSeconds, 60 | Measure -Max).Maximum)
+    $now = Get-Date
+    $futur = [datetime]::ParseExact("$date $time", "g", $null)
+    $delaySeconds = [math]::floor((($futur - $now).TotalSeconds, 60 | Measure -Max).Maximum)
   
-  echo "Restarting in $delaySeconds seconds; use shutdown -a to stop this"
+    echo "Restarting in $delaySeconds seconds; use shutdown -a to stop this"
   
-  shutdown -r -t $delaySeconds
+    shutdown -r -t $delaySeconds
 }
