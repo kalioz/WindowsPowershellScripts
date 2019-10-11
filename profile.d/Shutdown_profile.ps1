@@ -33,9 +33,9 @@ Function RestartAt {
   
     $now = Get-Date
     $futur = [datetime]::ParseExact("$date $time", "g", $null)
-    $delaySeconds = [math]::floor((($futur - $now).TotalSeconds, 60 | Measure -Max).Maximum)
+    $delaySeconds = [math]::floor((($futur - $now).TotalSeconds, 60 | Measure-Object -Max).Maximum)
   
-    echo "Restarting in $delaySeconds seconds; use shutdown -a to stop this"
+    Write-Output "Restarting in $delaySeconds seconds; use shutdown -a to stop this"
   
     shutdown -r -t $delaySeconds
 }
